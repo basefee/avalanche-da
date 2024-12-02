@@ -8,47 +8,41 @@ import (
 	client "github.com/celestiaorg/celestia-openrpc"
 	"github.com/celestiaorg/celestia-openrpc/types/blob"
 	"github.com/celestiaorg/celestia-openrpc/types/share"
+	blobtypes "github.com/celestiaorg/celestia-app/x/blob/types"
 )
 
 type SendCelestiaAction struct {
-	URL       string 
-	Token     string 
-	Namespace []byte 
-	Data      []byte 
+	URL   string
+	Token string
+	Data  string
 }
 
-func SendCelestiaBlob(ctx context.Context, url string, token string, namespace []byte, data []byte) (string, error) {
-	celestiaClient, err := client.NewClient(ctx, url, token)
+func (a *SendCelestiaAction) Execute(ctx context.Context) (int64, error) {
+	client, err := client.NewClient(ctx, a.URL, a.Token)
 	if err != nil {
-		return "", fmt.Errorf("failed to create Celestia client: %w", err)
+		return 0, fmt.Errorf("failed to initialize Celestia client: %w", err)
 	}
-	blobNamespace, err := share.NewBlobNamespaceV0(namespace)
+	namespace, err := share.NewBlobNamespaceV0([]byte{0xDE, 0xAD, 0xBE, 0xEF})
 	if err != nil {
-		return "", fmt.Errorf("failed to create namespace: %w", err)
+		return 0, fmt.Errorf("failed to create namespace: %w", err)
 	}
-	newBlob, err := blob.NewBlobV0(blobNamespace, data)
+	dataBlob, err := blob.NewBlobV0(namespace, []byte(a.Data))
 	if err != nil {
-		return "", fmt.Errorf("failed to create blob: %w", err)
+		return 0, fmt.Errorf("failed to create blob: %w", err)
 	}
-	height, err := celestiaClient.Blob.Submit(ctx, []*blob.Blob{newBlob}, blob.DefaultGasPrice())
+	sizeOfDataInBytes := len(a.Data)
+	gasLimit := blobtypes.DefaultEstimateGas([]uint32{uint32(sizeOfDataInBytes)})
+	height, err := client.Blob.Submit(ctx, []*blob.Blob{dataBlob}, gasLimit)
 	if err != nil {
-		return "", fmt.Errorf("failed to submit blob: %w", err)
+		return 0, fmt.Errorf("failed to submit blob: %w", err)
 	}
-	retrievedBlobs, err := celestiaClient.Blob.GetAll(ctx, height, []share.Namespace{blobNamespace})
+	retrievedBlobs, err := client.Blob.GetAll(ctx, height, []share.Namespace{namespace})
 	if err != nil {
-		return "", fmt.Errorf("failed to retrieve blobs: %w", err)
+		return 0, fmt.Errorf("failed to retrieve blob: %w", err)
 	}
-	if !bytes.Equal(newBlob.Commitment, retrievedBlobs[0].Commitment) {
-		return "", fmt.Errorf("blob verification failed: retrieved blob does not match submitted blob")
+	if !bytes.Equal(dataBlob.Commitment, retrievedBlobs[0].Commitment) {
+		return 0, fmt.Errorf("retrieved blob does not match submitted blob")
 	}
-
-	return fmt.Sprintf("Blob successfully included at height %d", height), nil
-}
-
-func (a *SendCelestiaAction) Execute(ctx context.Context) (string, error) {
-	result, err := SendCelestiaBlob(ctx, a.URL, a.Token, a.Namespace, a.Data)
-	if err != nil {
-		return "", fmt.Errorf("failed to execute SendCelestiaAction: %w", err)
-	}
-	return result, nil
+	fmt.Printf("Blob was included at height %d\n", height)
+	return height, nil
 }
