@@ -16,7 +16,7 @@ func TestSendBlobAction(t *testing.T) {
 
 	sendAction := actions.SendBlobAction{
 		Client:     client,
-		PrivateKey: "ca834b039044a6fcd17f314dbd12e8bf3afc904e94e6200e1b5580b0eab4847c", // Replace with actual private key for testing
+		PrivateKey: "PRIV_KEY", // Replace with actual private key for testing
 	}
 	rawBlob := []byte("example raw blob data")
 	result, err := sendAction.Execute(context.Background(), rawBlob)
