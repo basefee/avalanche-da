@@ -43,6 +43,7 @@ func init() {
 		ActionParser.Register(&actions.Transfer{}, nil),
 		ActionParser.Register(&actions.SendBlobAction{}, nil),
 		ActionParser.Register(&actions.SendCelestiaAction{}, nil),
+		ActionParser.Register(&actions.SendAvailAction{}, nil),
 
 		// When registering new auth, ALWAYS make sure to append at the end.
 		AuthParser.Register(&auth.ED25519{}, auth.UnmarshalED25519),
