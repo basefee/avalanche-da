@@ -42,6 +42,7 @@ func init() {
 		// Pass nil as second argument if manual marshalling isn't needed (if in doubt, you probably don't)
 		ActionParser.Register(&actions.Transfer{}, nil),
 		ActionParser.Register(&actions.SendBlobAction{}, nil),
+		ActionParser.Register(&actions.SendCelestiaAction{}, nil),
 
 		// When registering new auth, ALWAYS make sure to append at the end.
 		AuthParser.Register(&auth.ED25519{}, auth.UnmarshalED25519),

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"myproject/actions"
+	"github.com/ava-labs/hypersdk-starter-kit/actions"
 )
 
 func TestSendCelestiaAction(t *testing.T) {
